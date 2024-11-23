@@ -2,18 +2,18 @@ import React, { useEffect } from "react";
 import {
   View,
   Text,
-  Button,
   Image,
   Platform,
   Alert,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
-  TextInput,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-
-type ImageResponse = ImagePicker.ImagePickerResult;
+import ImageControls from "./ImageControls";
+import ProductDetailsInputs from "./ProductDetailsInputs";
+import { auth } from "../backend/config";
+import { db } from "../backend/config";
+import { ref, push } from "firebase/database";
 
 const PhotoPicker = ({
   imageUri,
@@ -49,64 +49,37 @@ const PhotoPicker = ({
     requestPermission();
   }, []);
 
-  const selectImage = async () => {
+  const addProduct = async () => {
+    const user = auth.currentUser;
+    if (user === null) return;
+    const userId = user.uid;
     try {
-      const result: ImageResponse = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        quality: 1,
-        allowsEditing: true,
+      const userRef = ref(db, `users/${userId}`);
+      await push(userRef, {
+        imageUri,
+        name,
+        price,
       });
-
-      if (!result.canceled) {
-        setImageUri(result.assets[0].uri);
-      }
     } catch (e) {
-      console.error("Error selecting image", e);
-    }
-  };
-
-  const takePhoto = async () => {
-    try {
-      const result: ImageResponse = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        quality: 1,
-      });
-      if (!result.canceled) {
-        setImageUri(result.assets[0].uri);
-      }
-    } catch (e) {
-      console.error("Error taking photo", e);
+      alert(e);
     }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.btnContainer}>
-        <TouchableOpacity onPress={selectImage} style={styles.selectBtn}>
-          <Text style={styles.selectBtnTxt}>Select Photo</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={takePhoto} style={styles.selectBtn}>
-          <Text style={styles.selectBtnTxt}>Take Photo</Text>
-        </TouchableOpacity>
-      </View>
+      <ImageControls imageUri={imageUri} setImageUri={setImageUri} />
       {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
 
-      <TextInput
-        value={name}
-        onChangeText={setName}
-        placeholder={"Enter product name:"}
-        style={styles.input}
-      />
-      <TextInput
-        value={price}
-        onChangeText={setPrice}
-        placeholder={"Enter product price:"}
-        style={styles.input}
+      <ProductDetailsInputs
+        name={name}
+        setName={setName}
+        price={price}
+        setPrice={setPrice}
       />
 
       {/*  add OnPress  */}
       <TouchableOpacity
+        onPress={addProduct}
         style={[styles.selectBtn, { marginTop: 15, width: 220 }]}
       >
         <Text style={styles.selectBtnTxt}>Add Product</Text>
@@ -122,11 +95,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 30,
   },
-
-  btnContainer: {
-    flexDirection: "row",
-    gap: 25,
-    marginBottom: 30,
+  image: {
+    width: 220,
+    height: 220,
+    marginTop: 10,
+    borderRadius: 25,
   },
 
   selectBtn: {
@@ -141,19 +114,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     alignSelf: "center",
-  },
-  image: {
-    width: 220,
-    height: 220,
-    marginTop: 10,
-    borderRadius: 25,
-  },
-  input: {
-    width: 220,
-    backgroundColor: "white",
-    padding: 8,
-    borderRadius: 12,
-    marginTop: 20,
   },
 });
 

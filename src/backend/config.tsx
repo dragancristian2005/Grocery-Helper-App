@@ -11,6 +11,7 @@ const firebaseConfig = {
   storageBucket: "grocery-helper-d5b2d.firebasestorage.app",
   messagingSenderId: "842739069422",
   appId: "1:842739069422:web:f4adccff105a546aa35eff",
+  databaseURL: "https://grocery-helper-d5b2d-default-rtdb.firebaseio.com",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -18,3 +19,5 @@ const app = initializeApp(firebaseConfig);
 export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(ReactNativeAsyncStorage),
 });
+
+export const db = getDatabase(app);
