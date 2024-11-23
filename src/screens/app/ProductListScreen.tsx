@@ -2,7 +2,7 @@ import KSpacer from "../../components/KSpacer";
 import ScreenTitle from "../../components/ScreenTitle";
 import { useEffect, useState } from "react";
 import { db, auth } from "../../backend/config";
-import { ref, onValue, get } from "firebase/database";
+import { ref, onValue, get, remove } from "firebase/database";
 import {
   FlatList,
   View,
@@ -11,17 +11,61 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface Product {
   imageUri: string;
   name: string;
   price: string;
+  product?: string;
 }
 
 const ProductListScreen = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
+  const [addedProducts, setAddedProducts] = useState<(string | undefined)[]>(
+    [],
+  );
+  const saveProductsToStorage = async (products: (string | undefined)[]) => {
+    try {
+      await AsyncStorage.setItem("addedProducts", JSON.stringify(products));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const loadProductsFromStorage = async () => {
+    try {
+      const storedProducts = await AsyncStorage.getItem("addedProducts");
+      if (storedProducts) {
+        setAddedProducts(JSON.parse(storedProducts));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // const clearStorage = async () => {
+  //   try {
+  //     setAddedProducts([]);
+  //     await AsyncStorage.clear();
+  //     console.log("AsyncStorage has been cleared!");
+  //   } catch (error) {
+  //     console.error("Error clearing AsyncStorage:", error);
+  //   }
+  // };
+
+  useEffect(() => {
+    loadProductsFromStorage();
+    // clearStorage();
+  }, []);
+
+  useEffect(() => {
+    saveProductsToStorage(addedProducts);
+    console.log(addedProducts);
+  }, [addedProducts]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -36,7 +80,7 @@ const ProductListScreen = () => {
                 Object.keys(productData).map(async (product) => {
                   const productIdRef = ref(db, `users/${user.uid}/${product}`);
                   const prod = await get(productIdRef);
-                  return prod.val();
+                  return { ...prod.val(), product };
                 }),
               );
               setProducts(productsArray);
@@ -64,6 +108,18 @@ const ProductListScreen = () => {
     product.name.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const removeProduct = async (productId: string | undefined) => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const productRef = ref(db, `users/${user.uid}/${productId}`);
+        await remove(productRef);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <KSpacer>
       <ScreenTitle name="Items List" />
@@ -79,19 +135,58 @@ const ProductListScreen = () => {
           keyExtractor={(_, index) => index.toString()}
           style={styles.container}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.productContainer}
-              onPress={() => console.log("pressed")}
-            >
+            <View style={styles.productContainer}>
               <Image
                 source={{ uri: item.imageUri }}
                 style={{ width: 100, height: 100, borderRadius: 16 }}
               />
+
               <View style={styles.nameContainer}>
                 <Text style={styles.productName}>{item.name}</Text>
               </View>
-              <Text style={styles.productPrice}>{item.price}RON</Text>
-            </TouchableOpacity>
+
+              <View
+                style={{
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={styles.productPrice}>{item.price}RON</Text>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert(
+                      "Confirm deletion?",
+                      "Are you sure you want to delete this item?",
+                      [
+                        {
+                          text: "Cancel",
+                          style: "cancel",
+                        },
+                        {
+                          text: "Delete",
+                          onPress: () => removeProduct(item.product),
+                          style: "destructive",
+                        },
+                      ],
+                      { cancelable: false },
+                    );
+                  }}
+                  style={styles.removeBtn}
+                >
+                  <Text style={styles.removeBtnTxt}>Remove</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.addBtn}
+                  onPress={() => {
+                    setAddedProducts((prevData) => [...prevData, item.product]);
+                  }}
+                >
+                  <Text style={styles.addBtnTxt}>Add To Cart</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           )}
         />
       ) : (
@@ -137,6 +232,27 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 12,
     marginTop: 10,
+  },
+  removeBtn: {
+    backgroundColor: "tomato",
+    marginVertical: 5,
+    width: 70,
+    padding: 5,
+    borderRadius: 8,
+    alignSelf: "flex-end",
+  },
+  removeBtnTxt: {
+    color: "white",
+    textAlign: "center",
+  },
+  addBtn: {
+    backgroundColor: "#005BAA",
+    borderRadius: 8,
+    padding: 5,
+  },
+  addBtnTxt: {
+    color: "white",
+    textAlign: "center",
   },
 });
 
