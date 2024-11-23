@@ -1,10 +1,10 @@
 import KSpacer from "../../components/KSpacer";
-import { Text } from "react-native";
+import ScreenTitle from "../../components/ScreenTitle";
 
 const ShoppingCartScreen = () => {
   return (
     <KSpacer>
-      <Text>ShoppingCartScreen</Text>
+      <ScreenTitle name="Shopping Cart" />
     </KSpacer>
   );
 };

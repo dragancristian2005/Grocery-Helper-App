@@ -1,12 +1,12 @@
 import KSpacer from "../../components/KSpacer";
-import { Button, Text } from "react-native";
-import AddProductScreen from "./AddProductScreen";
+import { Button } from "react-native";
 import { logout } from "../../backend";
+import ScreenTitle from "../../components/ScreenTitle";
 
 const SettingsScreen = () => {
   return (
     <KSpacer>
-      <Text>Settings</Text>
+      <ScreenTitle name={"Settings"} />
       <Button onPress={logout} title="Logout" />
     </KSpacer>
   );
