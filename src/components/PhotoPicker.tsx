@@ -60,6 +60,9 @@ const PhotoPicker = ({
         name,
         price,
       });
+      setName("");
+      setPrice("");
+      setImageUri("");
     } catch (e) {
       alert(e);
     }
@@ -77,7 +80,6 @@ const PhotoPicker = ({
         setPrice={setPrice}
       />
 
-      {/*  add OnPress  */}
       <TouchableOpacity
         onPress={addProduct}
         style={[styles.selectBtn, { marginTop: 15, width: 220 }]}

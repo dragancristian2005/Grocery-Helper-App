@@ -14,10 +14,7 @@ export const register = async ({
     const res = await createUserWithEmailAndPassword(auth, email, password);
     const user = res.user;
     const userRef = ref(db, "users/" + user.uid);
-    await set(userRef, {
-      email: email,
-      password: password,
-    });
+    await set(userRef, {});
   } catch (e) {
     alert(e);
   }

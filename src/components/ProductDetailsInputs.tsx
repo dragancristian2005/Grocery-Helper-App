@@ -19,12 +19,14 @@ const ProductDetailsInputs = ({
         onChangeText={setName}
         placeholder={"Enter product name:"}
         style={styles.input}
+        autoCapitalize={"words"}
       />
       <TextInput
         value={price}
         onChangeText={setPrice}
         placeholder={"Enter product price:"}
         style={styles.input}
+        autoCapitalize={"words"}
       />
     </View>
   );
