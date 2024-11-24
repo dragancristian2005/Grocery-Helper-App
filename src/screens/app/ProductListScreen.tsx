@@ -179,7 +179,7 @@ const ProductListScreen = () => {
                         item.product,
                       ]);
                     } else {
-                      ///alert
+                      alert("Item already in cart.");
                     }
                   }}
                 >
