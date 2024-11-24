@@ -66,15 +66,20 @@ const ShoppingCartScreen = () => {
     }
   };
 
+  const removeProduct = async (name: string) => {
+    const filteredProducts = products.filter((item) => item.name !== name);
+    setProducts(filteredProducts);
+  };
+
   useEffect(() => {
     fetchProducts();
-  }, [products]);
+  }, [addedProducts]);
 
   useEffect(() => {
     navigation.addListener("focus", () => {
       loadProductsFromStorage();
     });
-  }, [navigation]);
+  }, []);
 
   return (
     <KSpacer>
@@ -87,7 +92,12 @@ const ShoppingCartScreen = () => {
         <View style={styles.priceSection}>
           <Text style={styles.totalPrice}>
             Total:{" "}
-            {products.reduce((prev, curr) => prev + Number(curr.price), 0)} RON
+            {products.reduce(
+              (prev, curr) =>
+                curr.price !== null ? prev + Number(curr.price) : prev,
+              0,
+            )}{" "}
+            RON
           </Text>
         </View>
       </View>
@@ -102,7 +112,6 @@ const ShoppingCartScreen = () => {
               source={{ uri: item.imageUri }}
               style={{ width: 100, height: 100, borderRadius: 16 }}
             />
-
             <View style={styles.nameContainer}>
               <Text style={styles.productName}>{item.name}</Text>
             </View>
@@ -115,6 +124,14 @@ const ShoppingCartScreen = () => {
               <Text style={{ fontSize: 20, color: "white" }}>
                 {item.price}RON
               </Text>
+              <TouchableOpacity
+                style={styles.deleteBtn}
+                onPress={() => {
+                  removeProduct(item.name);
+                }}
+              >
+                <Text style={styles.deleteBtnTxt}>Delete</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -177,6 +194,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 15,
+  },
+  deleteBtn: {
+    backgroundColor: "tomato",
+    padding: 6,
+    borderRadius: 12,
+  },
+  deleteBtnTxt: {
+    color: "white",
   },
 });
 
