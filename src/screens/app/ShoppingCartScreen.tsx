@@ -3,7 +3,14 @@ import ScreenTitle from "../../components/ScreenTitle";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { FlatList, View, Text, Image, StyleSheet } from "react-native";
+import {
+  FlatList,
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import { auth, db } from "../../backend/config";
 import { ref, get } from "firebase/database";
 
@@ -21,6 +28,15 @@ const ShoppingCartScreen = () => {
   );
   const [products, setProducts] = useState<Product[]>([]);
 
+  const clearStorage = async () => {
+    try {
+      setAddedProducts([]);
+      await AsyncStorage.setItem("addedProducts", JSON.stringify([]));
+    } catch (error) {
+      console.error("Error clearing AsyncStorage:", error);
+    }
+  };
+
   const loadProductsFromStorage = async () => {
     try {
       const storedProducts = await AsyncStorage.getItem("addedProducts");
@@ -32,34 +48,50 @@ const ShoppingCartScreen = () => {
     }
   };
 
-  useEffect(() => {
-    navigation.addListener("focus", () => loadProductsFromStorage());
-  }, [navigation]);
+  const fetchProducts = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const productsPromises = addedProducts.map(async (prod) => {
+          const productsRef = ref(db, `users/${user.uid}/${prod}`);
+          const product = await get(productsRef);
+          return product.val();
+        });
+        const productsData = await Promise.all(productsPromises);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const user = auth.currentUser;
-        if (user) {
-          const productsPromises = addedProducts.map(async (prod) => {
-            const productsRef = ref(db, `users/${user.uid}/${prod}`);
-            const product = await get(productsRef);
-            return product.val();
-          });
-          const productsData = await Promise.all(productsPromises);
-
-          setProducts(productsData);
-        }
-      } catch (e) {
-        console.error(e);
+        setProducts(productsData);
       }
-    };
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
     fetchProducts();
-  }, [addedProducts]);
+  }, [products]);
+
+  useEffect(() => {
+    navigation.addListener("focus", () => {
+      loadProductsFromStorage();
+    });
+  }, [navigation]);
 
   return (
     <KSpacer>
       <ScreenTitle name="Shopping Cart" />
+      <View style={styles.priceContainer}>
+        <TouchableOpacity style={styles.clearCartBtn} onPress={clearStorage}>
+          <Text style={styles.totalPrice}>Clear Cart</Text>
+        </TouchableOpacity>
+
+        <View style={styles.priceSection}>
+          <Text style={styles.totalPrice}>
+            Total:{" "}
+            {products.reduce((prev, curr) => prev + Number(curr.price), 0)} RON
+          </Text>
+        </View>
+      </View>
+
       <FlatList
         data={products}
         keyExtractor={(_, index) => index.toString()}
@@ -114,6 +146,37 @@ const styles = StyleSheet.create({
     backgroundColor: "#032959",
     padding: 15,
     borderRadius: 25,
+  },
+  priceContainer: {
+    width: "100%",
+    height: 45,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderRadius: 15,
+    padding: 10,
+    marginTop: 10,
+    gap: 10,
+  },
+  totalPrice: {
+    color: "white",
+    fontSize: 18,
+  },
+  priceSection: {
+    backgroundColor: "#032959",
+    height: 45,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 10,
+    borderRadius: 15,
+  },
+  clearCartBtn: {
+    backgroundColor: "#032959",
+    height: 45,
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 15,
   },
 });
 

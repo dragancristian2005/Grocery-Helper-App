@@ -14,6 +14,7 @@ import {
   Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 
 interface Product {
   imageUri: string;
@@ -28,6 +29,8 @@ const ProductListScreen = () => {
   const [addedProducts, setAddedProducts] = useState<(string | undefined)[]>(
     [],
   );
+  const navigation = useNavigation();
+
   const saveProductsToStorage = async (products: (string | undefined)[]) => {
     try {
       await AsyncStorage.setItem("addedProducts", JSON.stringify(products));
@@ -47,24 +50,14 @@ const ProductListScreen = () => {
     }
   };
 
-  // const clearStorage = async () => {
-  //   try {
-  //     setAddedProducts([]);
-  //     await AsyncStorage.clear();
-  //     console.log("AsyncStorage has been cleared!");
-  //   } catch (error) {
-  //     console.error("Error clearing AsyncStorage:", error);
-  //   }
-  // };
-
   useEffect(() => {
-    loadProductsFromStorage();
-    // clearStorage();
-  }, []);
+    navigation.addListener("focus", () => {
+      loadProductsFromStorage();
+    });
+  }, [navigation]);
 
   useEffect(() => {
     saveProductsToStorage(addedProducts);
-    console.log(addedProducts);
   }, [addedProducts]);
 
   useEffect(() => {
@@ -180,7 +173,14 @@ const ProductListScreen = () => {
                 <TouchableOpacity
                   style={styles.addBtn}
                   onPress={() => {
-                    setAddedProducts((prevData) => [...prevData, item.product]);
+                    if (!addedProducts.includes(item.product)) {
+                      setAddedProducts((prevData) => [
+                        ...prevData,
+                        item.product,
+                      ]);
+                    } else {
+                      ///alert
+                    }
                   }}
                 >
                   <Text style={styles.addBtnTxt}>Add To Cart</Text>
