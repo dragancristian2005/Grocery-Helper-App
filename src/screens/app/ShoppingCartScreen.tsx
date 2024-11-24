@@ -67,6 +67,16 @@ const ShoppingCartScreen = () => {
   };
 
   const removeProduct = async (name: string) => {
+    const removedIndex = products.findIndex((item) => item.name === name);
+    const updatedAddedProducts = [...addedProducts];
+    updatedAddedProducts.splice(removedIndex, 1);
+    setAddedProducts(updatedAddedProducts);
+
+    await AsyncStorage.setItem(
+      "addedProducts",
+      JSON.stringify(updatedAddedProducts),
+    );
+
     const filteredProducts = products.filter((item) => item.name !== name);
     setProducts(filteredProducts);
   };
